@@ -4,7 +4,11 @@ from PIL import Image, ImageTk
 import cv2
 import numpy as np
 import streamlit as st
-from common import *
+import sys
+sys.path.append('utility/B2_RecognitionObjectYolo8/') 
+
+from common import *  
+
 st.title("Phát hiện đối tượng YOLOv8")
 model = 'utility/B2_RecognitionObjectYolo8/best.onnx'
 filename_classes = 'utility/B2_RecognitionObjectYolo8/object_detection_classes_yolo.txt'

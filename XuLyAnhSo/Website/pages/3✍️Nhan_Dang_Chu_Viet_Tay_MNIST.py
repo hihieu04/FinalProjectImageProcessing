@@ -31,6 +31,7 @@ if 'is_load' not in st.session_state:
                 metrics=["accuracy"])
     st.session_state.model = model
 
+    
     # load data
     (_,_), (X_test, y_test) = datasets.mnist.load_data()
     X_test = X_test.reshape((10000, 28, 28, 1))
