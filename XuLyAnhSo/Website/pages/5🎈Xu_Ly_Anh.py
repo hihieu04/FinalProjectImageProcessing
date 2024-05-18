@@ -1,301 +1,161 @@
-import sys
-import tkinter
-from tkinter import Frame, Tk, BOTH, Text, Menu, END
-from tkinter.filedialog import Open, SaveAs
 import cv2
 import numpy as np
-import utility.B5_DigitalImageProcessing.Chapter03 as c3
-import utility.B5_DigitalImageProcessing.Chapter04 as c4
-import utility.B5_DigitalImageProcessing.Chapter05 as c5
-import utility.B5_DigitalImageProcessing.Chapter09 as c9
+import utility.B5_DigitalImageProcessing.Chapter03 as Chapter03
+import utility.B5_DigitalImageProcessing.Chapter04 as Chapter04
+import utility.B5_DigitalImageProcessing.Chapter05 as Chapter05
+import utility.B5_DigitalImageProcessing.Chapter09 as Chapter09
 
-class Main(Frame):
-    
-    def __init__(self, parent):
-        Frame.__init__(self, parent)
-        self.parent = parent
-        self.initUI()
-  
-    def initUI(self):
-        self.parent.title("Digital Image Processing")
-        self.pack(fill=BOTH, expand=1)
-  
-        menubar = Menu(self.parent)
-        self.parent.config(menu=menubar)
-  
-        fileMenu = Menu(menubar, tearoff = 0)
-        fileMenu.add_command(label="Open", command=self.onOpen)
-        fileMenu.add_command(label="OpenColor", command=self.onOpenColor)
+import streamlit as st
+from PIL import Image
+import cv2
+import numpy as np
+st.title("Xử lý ảnh")
+col1, col2 = st.columns([1, 1], gap="large")
+with col1:
+    option =  st.selectbox("Function", ("None", "Negative", 'Logarit', "Power", "Piecewise Linear", "Histogram", "Histogram Equalization",
+                                "Local Histogram", "Histogram Statistics", "MyBox Filter", "Box Filter", "Threshold", "Median Filter", "Sharpen", "Gradient",
+                                "Spectrum", "Frequency Filter", "Remove Moire",
+                                "Create Motion Noise", "Denoise Motion",
+                                "Connected Component", "Count Rice"))
+    if option == "None":
+        st.write("Vui lòng chọn option!")
+    else:
+        st.write("")
+    uploaded_file = st.file_uploader("Upload Image")
+    if uploaded_file is not None:
+        st.write("Kích thước của file ảnh là: ", uploaded_file.size, "Bytes")
+        st.write("Tên của ảnh: ", uploaded_file.name)
+        st.write("---------------------------------------------------------------")
+    if option == "Negative":
+        st.write("A negative of an image is an image where its lightest areas appear as darkest and the darkest areas appear as lightest.")
+        st.write("The appearance change from lightest to darkest and darkest to lightest is basically done in gray scale image and refers to the change of pixel intensity values from highest to lowest and lowest to highest.")
+    elif option == "Logarit":
+        st.write("The dynamic range of an image can be compressed by replacing each pixel value with its logarithm. This has the effect that low intensity pixel values are enhanced. ")
+        st.write("Applying a pixel logarithm operator to an image can be useful in applications where the dynamic range may too large to be displayed on a screen (or to be recorded on a film in the first place).")
+    elif option == "Power":
+        st.write("The exponential and `raise to power' operators are two anamorphosis operators which can be applied to grayscale images. Like the logarithmic transform, they are used to change the dynamic range of an image. ")
+        st.write("However, in contrast to the logarithmic operator, they enhance high intensity pixel values.")
+    elif option == "Piecewise Linear":
+        st.write("Piece-wise Linear Transformation is type of gray level transformation that is used for image enhancement. It is a spatial domain method.")
+        st.write("It is used for manipulation of an image so that the result is more suitable than the original for a specific application.")
+    elif option == "Histogram":
+        st.write("Histograms Introduction. In digital image processing, the histogram is used for graphical representation of a digital image.")
+        st.write("A graph is a plot by the number of pixels for each tonal value. Nowadays, image histogram is present in digital cameras. Photographers use them to see the distribution of tones captured.")
+    elif option == "Histogram Equalization":
+        st.write("Histogram Equalization is a computer image processing technique used to improve contrast in images ")
+        st.write("It accomplishes this by effectively spreading out the most frequent intensity values, i.e. stretching out the intensity range of the image.")
+    elif option == "Local Histogram":
+        st.write("In digital image processing, the histogram is used for graphical representation of a digital image. A graph is a plot by the number of pixels for each tonal value. ")
+        st.write("Nowadays, image histogram is present in digital cameras. Photographers use them to see the distribution of tones captured.")
+    elif option == "Histogram Statistics":
+        st.write("An image histogram is a type of histogram that acts as a graphical representation of the tonal distribution in a digital image.")
+        st.write("In an image processing context, the histogram of an image normally refers to a histogram of the pixel intensity values.")
+    elif option == "MyBox Filter":
+        pass
+    elif option == "Box Filter":
+        pass
+    elif option == "Threshold":
+        pass
+    elif option == "Smoothing":
+        st.write("Smoothing is used to reduce noise or to produce a less pixelated image. Most smoothing methods are based on low-pass filters, ")
+        st.write("But you can also smooth an image using an average or median value of a group of pixels (a kernel) that moves through the image.")
+    elif option == "Sharpen":
+        st.write("Image sharpening is an effect applied to digital images to give them a sharper appearance. ")
+        st.write("Sharpening enhances the definition of edges in an image. The dull images are those which are poor at the edges. There is not much difference in background and edges.")
+    elif option == "Gradient":
+        st.write("An image gradient is a directional change in the intensity or color in an image. The gradient of the image is one of the fundamental building blocks in image processing")
+        st.write("For example, the Canny edge detector uses image gradient for edge detection.")
+    elif option == "Median Filter":
+        st.write("The median filter is the filtering technique used for noise removal from images and signals.")
+        st.write("Median filter is very crucial in the image processing field as it is well known for the preservation of edges during noise removal.")
+    elif option == "Spectrum":
+        pass
+    elif option == "Frequency Filter":
+        pass
+    elif option == "Remove Moire":
+        pass
+    elif option == "Create Motion filter":
+        pass
+    elif option == "Create Motion Noise":
+        pass
+    elif option == "Denoise Motion":
+        pass
+    elif option == "Connected Component":
+        pass
+    elif option == "Count Rice":
+        pass
+    else:
+        st.write("")
 
-        fileMenu.add_command(label="Save", command=self.onSave)
-        fileMenu.add_separator()
-        fileMenu.add_command(label="Exit", command=self.quit)
-        menubar.add_cascade(label="File", menu=fileMenu)
+with col2:
+    global imgin
+    if uploaded_file is not None:
+        temp_image = Image.open(uploaded_file)
+        image_path = 'utility/B5_DigitalImageProcessing/input/' + uploaded_file.name
+        temp_image.save(image_path)
+        image = Image.open(image_path)
+        st.image(image, caption='Input', use_column_width=True)
+        img_array = np.array(image)
+        cv2.imwrite('utility/B5_DigitalImageProcessing/out.jpg', cv2.cvtColor(img_array, cv2.IMREAD_GRAYSCALE))
+        imgin = cv2.imread('utility/B5_DigitalImageProcessing/out.jpg', cv2.IMREAD_GRAYSCALE)
+    else:
+        image_path = 'utility/B5_DigitalImageProcessing/data/background.jpg'
+        image = Image.open(image_path)
+        imgin = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        st.image(image, caption='Output', use_column_width=True)
 
-        chapter3Menu = Menu(menubar, tearoff = 0)
-        chapter3Menu.add_command(label="Negative", command=self.onNegative)
-        chapter3Menu.add_command(label="Logarit", command=self.onLogarit)
-        chapter3Menu.add_command(label="PiecewiseLinear", command=self.onPiecewiseLinear)
-        chapter3Menu.add_command(label="Histogram", command=self.onHistogram)
-        chapter3Menu.add_command(label="HistEqual", command=self.onHistEqual)
-        chapter3Menu.add_command(label="HistEqualColor", command=self.onHistEqualColor)
-        chapter3Menu.add_command(label="LocalHist", command=self.onLocalHist)
-        chapter3Menu.add_command(label="HistStat", command=self.onHistStat)
-        chapter3Menu.add_command(label="BoxFilter", command=self.onBoxFilter)
-        chapter3Menu.add_command(label="LowpassGauss", command=self.onLowpassGauss)
-        chapter3Menu.add_command(label="Threshold", command=self.onThreshold)
-        chapter3Menu.add_command(label="MedianFilter", command=self.onMedianFilter)
-        chapter3Menu.add_command(label="Sharpen", command=self.onSharpen)
+    if option == "Negative":
+        imgout = Chapter03.Negative(imgin)
+    elif option == "Logarit":
+        imgout = Chapter03.Logarit(imgin)
+    elif option == "Power":
+        imgout = Chapter03.Power(imgin)
+    elif option == "Piecewise Linear":
+        imgout = Chapter03.PiecewiseLinear(imgin)
+    elif option == "Histogram":
+        imgout = Chapter03.Histogram(imgin)
+    elif option == "Histogram Equalization":
+        imgout = Chapter03.HistEqual(imgin)
+    elif option == "Local Histogram":
+        imgout = Chapter03.LocalHist(imgin)
+    elif option == "Histogram Statistics":
+        imgout = Chapter03.HistStat(imgin)
+    elif option == "MyBox Filter":
+        imgout = Chapter03.MyBoxFilter(imgin)
+    elif option == "Box Filter":
+        imgout = Chapter03.BoxFilter(imgin)
+    elif option == "Threshold":
+        imgout = Chapter03.Threshold(imgin)
+    elif option == "Sharpen":
+        imgout = Chapter03.Sharpen(imgin)
+    elif option == "Gradient":
+        imgout = Chapter03.Gradient(imgin)
+    elif option == "Median Filter":
+        imgout = Chapter03.MedianFilter(imgin)
+    elif option == "Spectrum":
+        imgout = Chapter04.Spectrum(imgin)
+    elif option == "Frequency Filter":
+        imgout = Chapter04.FrequencyFilter(imgin)
+    elif option == "Remove Moire":
+        imgout = Chapter04.RemoveMoire(imgin)
+    elif option == "Create Motion Noise":
+        imgout = Chapter05.CreateMotionNoise(imgin)
+    elif option == "Denoise Motion":
+        imgout = Chapter05.DenoiseMotion(imgin)
+    elif option == "Connected Component":
+        imgout = Chapter09.ConnectedComponent(imgin)
+    elif option == "Count Rice":
+        imgout = Chapter09.CountRice(imgin)
+    else:
+        st.write("")
 
-        chapter3Menu.add_command(label="Gradient", command=self.onGradient)
-
-        menubar.add_cascade(label="Chapter3", menu=chapter3Menu)
-
-        chapter4Menu = Menu(menubar, tearoff = 0)
-        chapter4Menu.add_command(label="Spectrum", command=self.onSpectrum)
-        chapter4Menu.add_command(label="FrequencyFilter", command=self.onFrequencyFilter)
-        chapter4Menu.add_command(label="DrawNotchRejectFilter", command=self.onDrawNotchRejectFilter)
-        chapter4Menu.add_command(label="RemoveMoire", command=self.onRemoveMoire)
-        menubar.add_cascade(label="Chapter4", menu=chapter4Menu)
-
-        chapter5Menu = Menu(menubar, tearoff = 0)
-        chapter5Menu.add_command(label="CreateMotionNoise", command=self.onCreateMotionNoise)
-        chapter5Menu.add_command(label="DenoiseMotion", command=self.onDenoiseMotion)
-        chapter5Menu.add_command(label="DenoisestMotion", command=self.onDenoisestMotion)
-        menubar.add_cascade(label="Chapter5", menu=chapter5Menu)
-
-        chapter9Menu = Menu(menubar, tearoff = 0)
-        chapter9Menu.add_command(label="Erosion", command=self.onErosion)
-        chapter9Menu.add_command(label="Dilation", command=self.onDilation)
-        chapter9Menu.add_command(label="OpeningClosing", command=self.onOpeningClosing)
-        chapter9Menu.add_command(label="Boundary", command=self.onBoundary)
-        chapter9Menu.add_command(label="HoleFilling", command=self.onHoleFilling)
-        chapter9Menu.add_command(label="HoleFillingMouse", command=self.onHoleFillingMouse)
-        chapter9Menu.add_command(label="ConnectedComponent", command=self.onConnectedComponent)
-        chapter9Menu.add_command(label="CountRice", command=self.onCountRice)
-
-        menubar.add_cascade(label="Chapter9", menu=chapter9Menu)
-
-        self.txt = Text(self)
-        self.txt.pack(fill=BOTH, expand=1)
-  
-    def onOpen(self):
-        global ftypes
-        ftypes = [('Images', '*.jpg *.tif *.bmp *.gif *.png')]
-        dlg = Open(self, filetypes = ftypes)
-        fl = dlg.show()
-  
-        if fl != '':
-            global imgin
-            imgin = cv2.imread(fl,cv2.IMREAD_GRAYSCALE)
-            # imgin = cv2.imread(fl,cv2.IMREAD_COLOR);
-            cv2.namedWindow("ImageIn", cv2.WINDOW_AUTOSIZE)
-            cv2.imshow("ImageIn", imgin)
-
-    def onOpenColor(self):
-        global ftypes
-        ftypes = [('Images', '*.jpg *.tif *.bmp *.gif *.png')]
-        dlg = Open(self, filetypes = ftypes)
-        fl = dlg.show()
-  
-        if fl != '':
-            global imgin
-            imgin = cv2.imread(fl,cv2.IMREAD_COLOR);
-            cv2.namedWindow("ImageIn", cv2.WINDOW_AUTOSIZE)
-            cv2.imshow("ImageIn", imgin)
-
-    def onSave(self):
-        dlg = SaveAs(self,filetypes = ftypes);
-        fl = dlg.show()
-        if fl != '':
-            cv2.imwrite(fl,imgout)
-
-    def onNegative(self):
-        global imgout
-        imgout = c3.Negative(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onLogarit(self):
-        global imgout
-        imgout = c3.Logarit(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onPiecewiseLinear(self):
-        global imgout
-        imgout = c3.PiecewiseLinear(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onHistogram(self):
-        global imgout
-        imgout = c3.Histogram(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onHistEqual(self):
-        global imgout
-        #imgout = c3.HistEqual(imgin)
-        imgout = cv2.equalizeHist(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onHistEqualColor(self):
-        global imgout
-        imgout = c3.HistEqualColor(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onLocalHist(self):
-        global imgout
-        imgout = c3.LocalHist(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onHistStat(self):
-        global imgout
-        imgout = c3.HistStat(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onBoxFilter(self):
-        global imgout
-        #imgout = cv2.boxFilter(imgin, cv2.CV_8UC1, (21,21))
-        imgout = cv2.blur(imgin,(21,21))
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onLowpassGauss(self):
-        global imgout
-        imgout = cv2.GaussianBlur(imgin,(43,43),7.0)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onThreshold(self):
-        global imgout
-        imgout = c3.Threshold(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onMedianFilter(self):
-        global imgout
-        #imgout = c3.MedianFilter(imgin)
-        imgout = cv2.medianBlur(imgin, 7)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onSharpen(self):
-        global imgout
-        imgout = c3.Sharpen(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onGradient(self):
-        global imgout
-        imgout = c3.Gradient(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onSpectrum(self):
-        global imgout
-        imgout = c4.Spectrum(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onFrequencyFilter(self):
-        global imgout
-        imgout = c4.FrequencyFilter(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onDrawNotchRejectFilter(self):
-        global imgout
-        imgout = c4.DrawNotchRejectFilter()
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onRemoveMoire(self):
-        global imgout
-        imgout = c4.RemoveMoire(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onCreateMotionNoise(self):
-        global imgout
-        imgout = c5.CreateMotionNoise(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onDenoiseMotion(self):
-        global imgout
-        imgout = c5.DenoiseMotion(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onDenoisestMotion(self):
-        global imgout
-        temp = cv2.medianBlur(imgin, 7)
-        imgout = c5.DenoiseMotion(temp)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onErosion(self):
-        global imgout
-        imgout = c9.Erosion(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onDilation(self):
-        global imgout
-        imgout = c9.Dilation(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onOpeningClosing(self):
-        global imgout
-        imgout = c9.OpeningClosing(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onBoundary(self):
-        global imgout
-        imgout = c9.Boundary(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onHoleFilling(self):
-        c9.HoleFilling(imgin)
-        cv2.namedWindow("ImageIn", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageIn", imgin)
-
-    def onMouse(self, event, x, y, flags, param):
-        if flags & cv2.EVENT_FLAG_LBUTTON:
-            cv2.floodFill(imgin, self.mask, (x,y), (255,255,255))
-            cv2.namedWindow("ImageIn", cv2.WINDOW_AUTOSIZE)
-            cv2.imshow("ImageIn", imgin)
-
-    def onHoleFillingMouse(self):
-        M, N = imgin.shape
-        self.mask = np.zeros((M+2, N+2), np.uint8)
-        cv2.setMouseCallback('ImageIn', self.onMouse)
-
-    def onConnectedComponent(self):
-        global imgout
-        imgout = c9.ConnectedComponent(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-    def onCountRice(self):
-        global imgout
-        imgout = c9.CountRice(imgin)
-        cv2.namedWindow("ImageOut", cv2.WINDOW_AUTOSIZE)
-        cv2.imshow("ImageOut", imgout)
-
-
-
-root = Tk()
-Main(root)
-root.geometry("640x480+100+100")
-root.mainloop()
-
+with col2:
+    if option == "None":
+        image = Image.open(image_path)
+        img_array = np.array(image)
+        cv2.imwrite('utility/B5_DigitalImageProcessing/out.jpg', cv2.cvtColor(img_array, cv2.IMREAD_GRAYSCALE))
+        st.image(image, caption='Output', use_column_width=True)
+    else:
+        cv2.imwrite('utility/B5_DigitalImageProcessing/out.jpg', cv2.cvtColor(imgout, cv2.IMREAD_GRAYSCALE))
+        st.image(imgout, caption="Final", use_column_width=True)
+st.write("Link study more: ", "https://samirkhanal35.medium.com/negative-image-6cb7d5edcb54")
